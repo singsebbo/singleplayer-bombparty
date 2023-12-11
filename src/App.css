@@ -32,11 +32,17 @@
   width: 125px;
   height: 125px;
   border-radius: 50%;
-  background-color: #000000;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-size: 50px;
 }
 
 .textbox {
   font-size: 30px;
+  height: 25px;
 }
 
 .letters {
@@ -49,7 +55,7 @@
   margin-right: 10px;
 }
 
-.letter {
+.letters > div {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -63,4 +69,8 @@
   background-color: #000000;
   height: 8vh;
   flex-shrink: 0;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
