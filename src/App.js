@@ -1,12 +1,12 @@
 import "./App.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
   const [score, setScore] = useState(0);
   // -1 is no game running, 0 is game lose, anything greater is difficulty of game
   const [difficulty, setDifficulty] = useState(-1);
   const [lastScore, setLastScore] = useState('');
-  const [usedWords, setUsedWords] = useState(new Set());
+  const usedWords = useRef(new Set());
 
   return(
     <>
@@ -14,7 +14,7 @@ function App() {
         <HeaderContent score={score}/>
       </div>
       <div className="main">
-        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} setUsedWords={setUsedWords}/>
+        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords}/>
       </div>
       <div className="footer">
         <FooterContent setDifficulty={setDifficulty}/>
@@ -23,12 +23,12 @@ function App() {
   );
 }
 
-function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, setUsedWords}) {
+function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords}) {
   return (
     <>
       <div className="play">
-        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score}/>
-        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} setUsedWords={setUsedWords}/>
+        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords}/>
+        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords}/>
       </div>
       <div className="letters">
         <Letters />
@@ -37,7 +37,7 @@ function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, sco
   )
 }
 
-function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score}) {
+function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score, usedWords}) {
   const [timeLeft, setTimeLeft] = useState(-1);
   const [timerRotation, setTimerRotation] = useState(0);
 
@@ -64,6 +64,7 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
           setTimeout(() => {
             setTimerRotation(0);
             setDifficulty(-1);
+            usedWords.current.clear();
           }, 500)
         }
       }, 100);
@@ -85,35 +86,45 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
   );
 }
 
-function TextBox({setScore, difficulty, usedWords, setUsedWords}) {
-  const [text, setText] = useState('');
-  const [wrong, setWrong] = useState(false);
+function TextBox({setScore, difficulty, usedWords}) {
+  const [text, setText] = useState("");
 
-  function handleKeyDown(event) {
+  const textRef = useRef("");
+  const setTextRef = (data) => {
+    textRef.current = data;
+    setText(data);
+  }
+
+  const handleKeyDown = (event) => {
     if (event.key.length === 1 && event.key.match(/[a-zA-Z]/)) {
       // Add the alphabetical key to the text
-      setText((prevText) => prevText + event.key.toLowerCase());
+      setTextRef(textRef.current + event.key.toLowerCase());
     } else if (event.key === 'Backspace') {
       // Delete the last character when Backspace is pressed
-      setText((prevText) => prevText.slice(0, -1));
+      setTextRef(textRef.current.slice(0, -1));
     } else if (event.key === "Enter") {
-      // if word
-      if (usedWords.has(text)) {
-        
+      console.log(Array.from(usedWords.current));
+      console.log(textRef.current);
+      // if word is a word
+
+      // if word has or has not been used yet
+      if (usedWords.current.has(textRef.current)) {
+        console.log('cant enter this word');
       } else {
-        setUsedWords((prevWords) => new Set([...prevWords, text]));
-        setText("");
+        console.log('can enter this word')
+        usedWords.current.add(textRef.current);
+        setTextRef("");
         setScore((prevScore) => prevScore + 1);
       }
     }
-  };
+  } 
 
   useEffect(() => {
     if (difficulty > 0) {
       document.addEventListener('keydown', handleKeyDown);
     } else {
       document.removeEventListener('keydown', handleKeyDown);
-      setText('');
+      setText("");
     }
 
     // Cleanup
@@ -122,7 +133,7 @@ function TextBox({setScore, difficulty, usedWords, setUsedWords}) {
     };
   }, [difficulty]);
   return (
-    <div className="textbox" style={{color: `${wrong ? `#ff0000` : `#000000`}`}}>{text}</div>
+    <div className="textbox">{text}</div>
   );
 }
 
