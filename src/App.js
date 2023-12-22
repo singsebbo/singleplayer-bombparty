@@ -1,4 +1,5 @@
 import "./App.css";
+import axios from 'axios';
 import { useState, useEffect, useRef } from "react";
 
 function App() {
@@ -103,18 +104,19 @@ function TextBox({setScore, difficulty, usedWords}) {
       // Delete the last character when Backspace is pressed
       setTextRef(textRef.current.slice(0, -1));
     } else if (event.key === "Enter") {
-      console.log(Array.from(usedWords.current));
-      console.log(textRef.current);
-      // if word is a word
-
-      // if word has or has not been used yet
-      if (usedWords.current.has(textRef.current)) {
-        console.log('cant enter this word');
-      } else {
-        console.log('can enter this word')
-        usedWords.current.add(textRef.current);
-        setTextRef("");
-        setScore((prevScore) => prevScore + 1);
+      // if word typed contains the current substring
+      
+      // if word is a word and it has not been said yet
+      if (!usedWords.current.has(textRef.current)) {
+        axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${textRef.current}`)
+          .then(response => {
+            usedWords.current.add(textRef.current);
+            setTextRef("");
+            setScore((prevScore) => prevScore + 1);
+          })
+          .catch(error => {
+            console.error("Not a word");
+          });
       }
     }
   } 
