@@ -1,5 +1,6 @@
 import "./App.css";
 import axios from 'axios';
+import jsonData from './substrings.json';
 import { useState, useEffect, useRef } from "react";
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
   // -1 is no game running, 0 is game lose, anything greater is difficulty of game
   const [difficulty, setDifficulty] = useState(-1);
   const [lastScore, setLastScore] = useState('');
+  const [substring, setSubstring] = useState('');
   const usedWords = useRef(new Set());
 
   return(
@@ -15,7 +17,7 @@ function App() {
         <HeaderContent score={score}/>
       </div>
       <div className="main">
-        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords}/>
+        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstring}/>
       </div>
       <div className="footer">
         <FooterContent setDifficulty={setDifficulty}/>
@@ -24,12 +26,13 @@ function App() {
   );
 }
 
-function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords}) {
+function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring}) {
   return (
     <>
       <div className="play">
         <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords}/>
-        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords}/>
+        <Substring text={substring} setText={setSubstring} score={score} difficulty={difficulty}/>
+        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substring}/>
       </div>
       <div className="letters">
         <Letters />
@@ -87,7 +90,40 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
   );
 }
 
-function TextBox({setScore, difficulty, usedWords}) {
+function Substring({text, setText, score, difficulty}) {
+  // when the game starts, it sets a random substring
+  // upon a change in score to != 0, sets a new substring
+  // when score changes to 0, sets the substring to empty
+
+  useEffect(() => {
+    if (score > 0) {
+      const keys = Object.keys(jsonData);
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      const randomSubstrings = jsonData[randomKey];
+      const substring = randomSubstrings[Math.floor(Math.random() * randomSubstrings.length)];
+      setText(substring);
+    }
+  }, [score]);
+
+  useEffect(() => {
+    if (difficulty == -1) {
+      setText('');
+    } else if (difficulty > 0) {
+      const keys = Object.keys(jsonData);
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      const randomSubstrings = jsonData[randomKey];
+      const substring = randomSubstrings[Math.floor(Math.random() * randomSubstrings.length)];
+      setText(substring);
+    }
+  }, [difficulty])
+  return(
+    <div id="substring">
+      {text}
+    </div>
+  )
+}
+
+function TextBox({setScore, difficulty, usedWords, substring}) {
   const [text, setText] = useState("");
 
   const textRef = useRef("");
@@ -104,10 +140,8 @@ function TextBox({setScore, difficulty, usedWords}) {
       // Delete the last character when Backspace is pressed
       setTextRef(textRef.current.slice(0, -1));
     } else if (event.key === "Enter") {
-      // if word typed contains the current substring
-      
-      // if word is a word and it has not been said yet
-      if (!usedWords.current.has(textRef.current)) {
+      // if word has the current substring, if word is a word, and if it has not been said yet
+      if (textRef.current.includes(substring) && !usedWords.current.has(textRef.current)) {
         axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${textRef.current}`)
           .then(response => {
             usedWords.current.add(textRef.current);
@@ -126,7 +160,7 @@ function TextBox({setScore, difficulty, usedWords}) {
       document.addEventListener('keydown', handleKeyDown);
     } else {
       document.removeEventListener('keydown', handleKeyDown);
-      setText("");
+      setTextRef('');
     }
 
     // Cleanup
