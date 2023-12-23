@@ -11,6 +11,12 @@ function App() {
   const [substring, setSubstring] = useState('');
   const [lives, setLives] = useState(2);
   const usedWords = useRef(new Set());
+  const letters = useRef(Array.from({length: 26}, () => false));
+  const substringRef = useRef('');
+  const setSubstringRef = (data) => {
+    substringRef.current = data;
+    setSubstring(data);
+  }
 
   return(
     <>
@@ -18,7 +24,7 @@ function App() {
         <HeaderContent score={score} lives={lives}/>
       </div>
       <div className="main">
-        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstring} lives={lives} setLives={setLives}/>
+        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstringRef} lives={lives} setLives={setLives} letters={letters} substringRef={substringRef}/>
       </div>
       <div className="footer">
         <FooterContent setDifficulty={setDifficulty}/>
@@ -27,16 +33,16 @@ function App() {
   );
 }
 
-function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring, lives, setLives}) {
+function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring, lives, setLives, letters, substringRef}) {
   return (
     <>
       <div className="play">
         <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} lives={lives} setLives={setLives}/>
         <Substring text={substring} setText={setSubstring} score={score} difficulty={difficulty} lives={lives}/>
-        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substring}/>
+        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substringRef} letters={letters}/>
       </div>
       <div className="letters">
-        <Letters />
+        <Letters letters={letters}/>
       </div>
     </>
   )
@@ -131,7 +137,7 @@ function Substring({text, setText, score, difficulty, lives}) {
   )
 }
 
-function TextBox({setScore, difficulty, usedWords, substring}) {
+function TextBox({setScore, difficulty, usedWords, substring, letters}) {
   const [text, setText] = useState("");
 
   const textRef = useRef("");
@@ -149,10 +155,13 @@ function TextBox({setScore, difficulty, usedWords, substring}) {
       setTextRef(textRef.current.slice(0, -1));
     } else if (event.key === "Enter") {
       // if word has the current substring, if word is a word, and if it has not been said yet
-      if (textRef.current.includes(substring) && !usedWords.current.has(textRef.current)) {
+      if (textRef.current.includes(substring.current) && !usedWords.current.has(textRef.current)) {
         axios.get(`https://api.dictionaryapi.dev/api/v2/entries/en/${textRef.current}`)
           .then(response => {
             usedWords.current.add(textRef.current);
+            for (const char of textRef.current) {
+              letters.current[char - 'a'] = true;
+            }
             setTextRef("");
             setScore((prevScore) => prevScore + 1);
           })
@@ -181,13 +190,13 @@ function TextBox({setScore, difficulty, usedWords, substring}) {
   );
 }
 
-function Letters() {
+function Letters({letters}) {
   const lowercaseLetters = Array.from({ length: 26 }, (_, index) => String.fromCharCode(97 + index));
 
   return (
     <>
       {lowercaseLetters.map((letter, index) => (
-        <div className="letter" key={index}>{letter}</div>
+        <div className={`used-${letters.current[index]}`} key={index}>{letter}</div>
       ))}
     </>
   );

@@ -56,13 +56,23 @@
   margin-right: 10px;
 }
 
-.letters > div {
+.used-false {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 30px;
   height: 35px;
   background-color: #ff6767;
+  font-size: 25px;
+}
+
+.used-true {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 35px;
+  background-color: #00cc00;
   font-size: 25px;
 }
 
