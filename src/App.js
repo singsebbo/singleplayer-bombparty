@@ -9,15 +9,16 @@ function App() {
   const [difficulty, setDifficulty] = useState(-1);
   const [lastScore, setLastScore] = useState('');
   const [substring, setSubstring] = useState('');
+  const [lives, setLives] = useState(2);
   const usedWords = useRef(new Set());
 
   return(
     <>
       <div className="header">
-        <HeaderContent score={score}/>
+        <HeaderContent score={score} lives={lives}/>
       </div>
       <div className="main">
-        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstring}/>
+        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstring} lives={lives} setLives={setLives}/>
       </div>
       <div className="footer">
         <FooterContent setDifficulty={setDifficulty}/>
@@ -26,12 +27,12 @@ function App() {
   );
 }
 
-function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring}) {
+function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring, lives, setLives}) {
   return (
     <>
       <div className="play">
-        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords}/>
-        <Substring text={substring} setText={setSubstring} score={score} difficulty={difficulty}/>
+        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} lives={lives} setLives={setLives}/>
+        <Substring text={substring} setText={setSubstring} score={score} difficulty={difficulty} lives={lives}/>
         <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substring}/>
       </div>
       <div className="letters">
@@ -41,7 +42,7 @@ function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, sco
   )
 }
 
-function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score, usedWords}) {
+function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score, usedWords, lives, setLives}) {
   const [timeLeft, setTimeLeft] = useState(-1);
   const [timerRotation, setTimerRotation] = useState(0);
 
@@ -60,16 +61,23 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
           let percentLeft = (timeLeft / difficulty) * 100;
           setTimerRotation(360 - (percentLeft / 100) * 360);
         } else {
-          clearInterval(intervalId);
-          setLastScore(score);
-          setDifficulty(0);
-          setTimerRotation(360);
-          setScore(0);
-          setTimeout(() => {
-            setTimerRotation(0);
-            setDifficulty(-1);
-            usedWords.current.clear();
-          }, 500)
+          if (lives > 1) {
+            setLives((prevLives) => prevLives - 1);
+            setTimeLeft(difficulty);
+          } else {
+            setLives(0);
+            clearInterval(intervalId);
+            setLastScore(score);
+            setDifficulty(0);
+            setTimerRotation(360);
+            setScore(0);
+            setTimeout(() => {
+              setTimerRotation(0);
+              setDifficulty(-1);
+              usedWords.current.clear();
+              setLives(2);
+            }, 500)
+          }
         }
       }, 100);
   
@@ -90,7 +98,7 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
   );
 }
 
-function Substring({text, setText, score, difficulty}) {
+function Substring({text, setText, score, difficulty, lives}) {
   // when the game starts, it sets a random substring
   // upon a change in score to != 0, sets a new substring
   // when score changes to 0, sets the substring to empty
@@ -115,7 +123,7 @@ function Substring({text, setText, score, difficulty}) {
       const substring = randomSubstrings[Math.floor(Math.random() * randomSubstrings.length)];
       setText(substring);
     }
-  }, [difficulty])
+  }, [difficulty, lives])
   return(
     <div id="substring">
       {text}
@@ -185,26 +193,34 @@ function Letters() {
   );
 }
 
-function HeaderContent({score}) {
+function HeaderContent({score, lives}) {
   return (
-    <Stats score={score}/>
+    <Stats score={score} lives={lives}/>
   );
 }
 
-function Stats({score}) {
+function Stats({score, lives}) {
+  const hearts = Array.from({length: lives}, (_, index) => index);
   return(
-    <div className="stats">
-      Score: {score}
-    </div>
+    <>
+      <div className="stats">
+        <div id="score">
+          Score: {score}
+        </div>
+        <div id="lives">
+          Lives: {hearts.map((h, index) => <span>❤️</span>)}
+        </div>
+      </div>
+    </>
   );
 }
 
 function FooterContent({setDifficulty}) {
   return (
     <>
-      <div className="difficulty" onClick={() => setDifficulty(8)}>Easy</div>
-      <div className="difficulty" onClick={() => setDifficulty(5)}>Medium</div>
-      <div className="difficulty" onClick={() => setDifficulty(3)}>Hard</div>
+      <div className="difficulty" onClick={() => setDifficulty(12)}>Easy</div>
+      <div className="difficulty" onClick={() => setDifficulty(8)}>Medium</div>
+      <div className="difficulty" onClick={() => setDifficulty(5)}>Hard</div>
     </>
   );
 }
