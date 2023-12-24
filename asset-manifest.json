@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/singleplayer-bombparty/static/css/main.55154511.css",
+    "main.js": "/singleplayer-bombparty/static/js/main.6574cb4e.js",
+    "index.html": "/singleplayer-bombparty/index.html",
+    "main.55154511.css.map": "/singleplayer-bombparty/static/css/main.55154511.css.map",
+    "main.6574cb4e.js.map": "/singleplayer-bombparty/static/js/main.6574cb4e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.55154511.css",
+    "static/js/main.6574cb4e.js"
+  ]
+}
