@@ -17,6 +17,11 @@ function App() {
     substringRef.current = data;
     setSubstring(data);
   }
+  const livesRef = useRef(2);
+  const setLivesRef = (data) => {
+    livesRef.current = data;
+    setLives(data);
+  }
 
   return(
     <>
@@ -24,7 +29,7 @@ function App() {
         <HeaderContent score={score} lives={lives}/>
       </div>
       <div className="main">
-        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstringRef} lives={lives} setLives={setLives} letters={letters} substringRef={substringRef}/>
+        <Game setScore={setScore} difficulty={difficulty} setDifficulty={setDifficulty} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} substring={substring} setSubstring={setSubstringRef} lives={lives} setLives={setLivesRef} letters={letters} substringRef={substringRef} livesRef={livesRef} setLivesRef={setLivesRef}/>
       </div>
       <div className="footer">
         <FooterContent setDifficulty={setDifficulty}/>
@@ -33,13 +38,13 @@ function App() {
   );
 }
 
-function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring, lives, setLives, letters, substringRef}) {
+function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, score, usedWords, substring, setSubstring, lives, setLives, letters, substringRef, livesRef, setLivesRef}) {
   return (
     <>
       <div className="play">
-        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} lives={lives} setLives={setLives}/>
+        <Bomb difficulty={difficulty} setDifficulty={setDifficulty} setScore={setScore} lastScore={lastScore} setLastScore={setLastScore} score={score} usedWords={usedWords} lives={lives} setLives={setLives} letters={letters}/>
         <Substring text={substring} setText={setSubstring} score={score} difficulty={difficulty} lives={lives}/>
-        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substringRef} letters={letters}/>
+        <TextBox setScore={setScore} difficulty={difficulty} usedWords={usedWords} substring={substringRef} letters={letters} lives={livesRef} setLives={setLivesRef}/>
       </div>
       <div className="letters">
         <Letters letters={letters}/>
@@ -48,7 +53,7 @@ function Game({setScore, difficulty, setDifficulty, lastScore, setLastScore, sco
   )
 }
 
-function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score, usedWords, lives, setLives}) {
+function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, score, usedWords, lives, setLives, letters}) {
   const [timeLeft, setTimeLeft] = useState(-1);
   const [timerRotation, setTimerRotation] = useState(0);
 
@@ -82,6 +87,7 @@ function Bomb({difficulty, setDifficulty, setScore, lastScore, setLastScore, sco
               setDifficulty(-1);
               usedWords.current.clear();
               setLives(2);
+              letters.current = letters.current.map(() => false);
             }, 500)
           }
         }
@@ -137,7 +143,7 @@ function Substring({text, setText, score, difficulty, lives}) {
   )
 }
 
-function TextBox({setScore, difficulty, usedWords, substring, letters}) {
+function TextBox({setScore, difficulty, usedWords, substring, letters, lives, setLives}) {
   const [text, setText] = useState("");
 
   const textRef = useRef("");
@@ -160,7 +166,11 @@ function TextBox({setScore, difficulty, usedWords, substring, letters}) {
           .then(response => {
             usedWords.current.add(textRef.current);
             for (const char of textRef.current) {
-              letters.current[char - 'a'] = true;
+              letters.current[char.charCodeAt(0) - 97] = true;
+            }
+            if (letters.current.every((letter) => letter === true)) {
+              setLives(lives.current + 1);
+              letters.current = letters.current.map(() => false);
             }
             setTextRef("");
             setScore((prevScore) => prevScore + 1);
